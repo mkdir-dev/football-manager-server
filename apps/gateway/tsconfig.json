@@ -11,6 +11,20 @@
     }
   ],
   "compilerOptions": {
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": "src",
+    "paths": {
+      "packages/*": ["packages/*"],
+      "app/*": ["packages/app/*"],
+      "config/*": ["packages/config/*"],
+      "user/*": ["packages/user/*"],
+
+      "@infrastructure": ["../../../libs/infrastructure/src/index.ts"],
+      "@infrastructure/*": ["../../../libs/infrastructure/src/*"],
+      "@services/gateway": ["../../../libs/gateway-microservice/src/index.ts"],
+      "@services/gateway/*": ["../../../libs/gateway-microservice/src/*"],
+      "@services/user": ["../../../libs/user-microservice/src/index.ts"],
+      "@services/user/*": ["../../../libs/user-microservice/src/*"]
+    },
   }
 }

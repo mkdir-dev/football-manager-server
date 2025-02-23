@@ -1,1 +1,1 @@
-export * from './lib/user-microservice.module';
+export * from './user.module';
