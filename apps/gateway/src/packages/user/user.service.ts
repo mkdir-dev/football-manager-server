@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,7 +9,13 @@ export class UserService {
   constructor(@Inject(UserMicroserviceName) private userClient: ClientProxy) {}
 
   async getUser(authorization: string) {
-    // если нет авторизации, то возвращаем exception с ошибкой авторизации
+    if (!authorization) {
+      throw new UnauthorizedException({
+        statusCode: 401,
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const getUser$ = this.userClient.send<{
       accountId: number;

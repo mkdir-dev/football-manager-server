@@ -4,12 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-// import { RpcExceptionFilter } from 'infrastructure/utils';
 import {
   GatewayMicroserviceName,
   GatewayMicroserviceQueue,
 } from '@services/gateway/gateway.constants';
 import { AppModule } from 'app/app.module';
+import { RpcExceptionFilter } from 'utils/rpc.exception.filter';
 
 async function bootstrap() {
   // NestJS
@@ -21,7 +21,6 @@ async function bootstrap() {
   const API_GLOBAL_PREFIX = configService.getOrThrow('API_GLOBAL_PREFIX');
 
   app.setGlobalPrefix(API_GLOBAL_PREFIX);
-  /*
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -29,7 +28,6 @@ async function bootstrap() {
     })
   );
   app.useGlobalFilters(new RpcExceptionFilter());
-  */
 
   // Swagger
   const config = new DocumentBuilder()

@@ -3,7 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 
 import { UserRepository } from 'user/user.repository';
 import { CreateUserAccount } from 'user/user.types';
-// import { UserExceptions } from './user.exceptions';
+import { UserExceptions } from 'user/user.exceptions';
 
 @Injectable()
 export class UserService {
@@ -11,7 +11,10 @@ export class UserService {
 
   async getOrCreateUser(authorization: string) {
     if (!authorization) {
-      throw new RpcException(`UserExceptions.InvalidTelegramUserData`);
+      throw new RpcException({
+        statusCode: 401,
+        message: UserExceptions.Unauthorized,
+      });
     }
 
     const params = new URLSearchParams(authorization);
@@ -20,9 +23,11 @@ export class UserService {
     const telegramUserData: CreateUserAccount = JSON.parse(decodeURIComponent(userData ?? ''));
 
     if (!telegramUserData) {
-      throw new RpcException(`UserExceptions.InvalidTelegramUserData`);
+      throw new RpcException({
+        statusCode: 400,
+        message: UserExceptions.InvalidTelegramUserData,
+      });
     }
-
     const user = await this.userRepository.getUserByTelegramAccountId(telegramUserData.id);
     if (!user) {
       const newUser = await this.userRepository.createUser(telegramUserData);
