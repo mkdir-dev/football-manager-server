@@ -11,7 +11,12 @@ export class UserService {
   async getUser(authorization: string) {
     // если нет авторизации, то возвращаем exception с ошибкой авторизации
 
-    const getUser$ = this.userClient.send<any>('user.get-or-create.user.command', {
+    const getUser$ = this.userClient.send<{
+      accountId: number;
+      displayName: string;
+      avatarUrl: string | null;
+      language: string | null;
+    }>('user.get-or-create.user.command', {
       authorization,
     });
 

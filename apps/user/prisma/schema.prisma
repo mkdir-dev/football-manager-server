@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@user-prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserAccount {
+  id                Int             @id @default(autoincrement())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  displayName       String
+  avatarUrl         String?
+  telegramAccount   TelegramAccount @relation(fields: [telegramAccountId], references: [id])
+  telegramAccountId Int             @unique
+}
+
+model TelegramAccount {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  telegramId    Int          @unique
+  username      String
+  firstName     String
+  lastName      String?
+  avatarUrl     String?
+  language      String?      @default("en")
+  isAllowsWrite Boolean      @default(false)
+  user          UserAccount?
+}

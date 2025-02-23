@@ -1,11 +1,10 @@
-// TODO: убрать ts-ignore-ы
 import { Injectable } from '@nestjs/common';
-// import { ITXClientDenyList } from '@vault-prisma/client/runtime/library';
+import { ITXClientDenyList } from '@user-prisma/client/runtime/library';
 
-// import { PrismaClient as MatchmakingPrismaClient } from '@matchmaking-prisma/client';
+import { PrismaClient as UserPrismaClient } from '@user-prisma/client';
 
 const PRISMA_BUNDLES = {
-  // matchmaking: MatchmakingPrismaClient,
+  user: UserPrismaClient,
 };
 
 type PrismaBundleName = keyof typeof PRISMA_BUNDLES;
@@ -13,10 +12,9 @@ type PrismaBundleName = keyof typeof PRISMA_BUNDLES;
 type PrismaBundle<BundleName extends PrismaBundleName = PrismaBundleName> =
   (typeof PRISMA_BUNDLES)[BundleName]['prototype'];
 
-// @ts-ignore
 export type PrismaContext<BundleName extends PrismaBundleName = PrismaBundleName> = Omit<
-  PrismaBundle<BundleName>
-  // ITXClientDenyList
+  PrismaBundle<BundleName>,
+  ITXClientDenyList
 >;
 
 @Injectable()
@@ -25,7 +23,6 @@ export class PrismaRepository<BundleName extends PrismaBundleName> {
   context: (typeof PRISMA_BUNDLES)[BundleName]['prototype'];
 
   constructor(bundleName: BundleName) {
-    // @ts-ignore
     const baseContext = new PRISMA_BUNDLES[bundleName]();
 
     this.$transaction = baseContext.$transaction.bind(baseContext);

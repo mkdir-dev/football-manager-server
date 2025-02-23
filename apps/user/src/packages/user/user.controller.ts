@@ -9,7 +9,6 @@ export class UserController {
 
   @MessagePattern('user.get-or-create.user.command')
   async getOrCreateUser(@Payload() payload: { authorization: string }) {
-    console.log('constroller getOrCreateUser: ', payload);
     return this.userService.getOrCreateUser(payload.authorization);
   }
 }
