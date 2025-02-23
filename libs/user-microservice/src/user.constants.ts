@@ -1,3 +1,4 @@
+import { Inject } from '@nestjs/common';
 import { ClientsProviderAsyncOptions, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
