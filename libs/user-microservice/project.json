@@ -1,0 +1,9 @@
+{
+  "name": "user-microservice",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/user-microservice/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project user-microservice --web",
+  "targets": {}
+}

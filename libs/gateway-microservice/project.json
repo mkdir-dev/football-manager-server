@@ -1,0 +1,9 @@
+{
+  "name": "gateway-microservice",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/gateway-microservice/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project gateway-microservice --web",
+  "targets": {}
+}

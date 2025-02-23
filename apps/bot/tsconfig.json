@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "baseUrl": "src",
+    "paths": {
+      "packages/*": ["packages/*"],
+      "app/*": ["packages/app/*"],
+      "config/*": ["packages/config/*"],
+      "bot/*": ["packages/bot/*"],
+
+    },
+  }
+}
