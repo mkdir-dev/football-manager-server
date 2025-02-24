@@ -8,7 +8,7 @@ import { UserMicroserviceName } from '@services/user/user.constants';
 export class UserService {
   constructor(@Inject(UserMicroserviceName) private userClient: ClientProxy) {}
 
-  async getUser(authorization: string) {
+  async getOrCreateUser(authorization: string) {
     if (!authorization) {
       throw new UnauthorizedException({
         statusCode: 401,
@@ -22,10 +22,19 @@ export class UserService {
       displayName: string;
       avatarUrl: string | null;
       language: string | null;
-    }>('user.get-or-create.user.command', {
+    }>('user.get-or-create-user.command', {
       authorization,
     });
 
     return await firstValueFrom(getUser$);
+  }
+
+  async setLastActiveAt(accountId: number, lastActiveAt: Date) {
+    const setLastActiveAt$ = this.userClient.send<{ success: boolean }>(
+      'user.set-last-active-at.command',
+      { accountId, lastActiveAt }
+    );
+
+    return await firstValueFrom(setLastActiveAt$);
   }
 }

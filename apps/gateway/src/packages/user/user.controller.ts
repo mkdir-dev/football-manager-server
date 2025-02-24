@@ -1,10 +1,12 @@
-import { Controller, Get, Headers } from '@nestjs/common';
+import { Controller, Get, Headers, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { AuthenticationGuard } from 'authentication/authentication.guard';
 import { UserService } from 'user/user.service';
 
 @Controller('user')
 @ApiTags('User')
+@UseGuards(AuthenticationGuard)
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -17,8 +19,8 @@ export class UserController {
       description: 'В случае успеха возвращает ID пользователя в системе',
     },
   })
-  @Get()
-  async getUser(@Headers('Authorization') authorization: string) {
-    return await this.userService.getUser(authorization);
+  @Get('init')
+  async getOrCreateUser(@Headers('Authorization') authorization: string) {
+    return await this.userService.getOrCreateUser(authorization);
   }
 }

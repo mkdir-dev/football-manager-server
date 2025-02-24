@@ -12,6 +12,7 @@ model UserAccount {
   id                Int             @id @default(autoincrement())
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+  lastActiveAt      DateTime        @default(now())
   displayName       String
   avatarUrl         String?
   telegramAccount   TelegramAccount @relation(fields: [telegramAccountId], references: [id])

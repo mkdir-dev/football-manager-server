@@ -47,4 +47,9 @@ export class UserService {
       language: user.telegramAccount.language,
     };
   }
+
+  async setLastActiveAt(accountId: number, lastActiveAt: Date) {
+    const user = await this.userRepository.setLastActiveAt(accountId, lastActiveAt);
+    return { success: user.id === accountId && lastActiveAt === user.lastActiveAt };
+  }
 }

@@ -47,4 +47,15 @@ export class UserRepository extends PrismaRepository<'user'> {
       include: { telegramAccount: true },
     });
   }
+
+  async setLastActiveAt(accountId: number, lastActiveAt: Date) {
+    return await this.context.userAccount.update({
+      where: { id: accountId },
+      data: { lastActiveAt },
+      select: {
+        id: true,
+        lastActiveAt: true,
+      },
+    });
+  }
 }

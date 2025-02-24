@@ -17,7 +17,9 @@
       "packages/*": ["packages/*"],
       "app/*": ["packages/app/*"],
       "config/*": ["packages/config/*"],
+      "authentication/*": ["packages/authentication/*"],
       "user/*": ["packages/user/*"],
+
 
       "@infrastructure": ["../../../libs/infrastructure/src/index.ts"],
       "@infrastructure/*": ["../../../libs/infrastructure/src/*"],
