@@ -4,8 +4,10 @@ import { ClientsModule } from '@nestjs/microservices';
 
 import { InfrastructureModule } from '@infrastructure';
 import { UserClient } from '@services/user/user.constants';
+
 import configuration from 'config/configuration';
 
+import { AuthenticationModule } from 'authentication/authentication.module';
 import { UserModule } from 'user/user.module';
 
 @Module({
@@ -19,6 +21,7 @@ import { UserModule } from 'user/user.module';
       clients: [UserClient],
     }),
     InfrastructureModule,
+    AuthenticationModule,
     UserModule,
   ],
   controllers: [],

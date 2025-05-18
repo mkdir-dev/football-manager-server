@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 
+import { AuthenticationExceptions } from '@infrastructure/exceptions/auth.exceptions';
 import { AuthenticationService } from 'authentication/authentication.service';
-import { AuthenticationExceptions } from 'authentication/authentication.exceptions';
 import { UserService } from 'user/user.service';
 
 @Injectable()
@@ -16,6 +16,9 @@ export class AuthenticationGuard implements CanActivate {
     if (ctx.getType() === 'rpc') return true;
 
     const request = ctx.switchToHttp().getRequest<Request>();
+    console.log('request.headers: ', request.headers);
+
+    /*
     const initialDataRaw = request.headers['authorization'];
     if (typeof initialDataRaw !== 'string') {
       throw new UnauthorizedException(
@@ -31,6 +34,7 @@ export class AuthenticationGuard implements CanActivate {
       const lastActiveAt = new Date(+authDate * 1000);
       await this.userService.setLastActiveAt(user.accountId, lastActiveAt);
     }
+    */
 
     return true;
   }

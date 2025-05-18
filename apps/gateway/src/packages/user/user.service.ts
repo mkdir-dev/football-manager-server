@@ -2,12 +2,27 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
+import {
+  GetOrCreateUserAndTgAccountRequest,
+  GetOrCreateUserAndTgAccountResponse,
+  UpdateUserRefreshTokenRequest,
+} from '@infrastructure/types/user.types';
 import { UserMicroserviceName } from '@services/user/user.constants';
 
 @Injectable()
 export class UserService {
   constructor(@Inject(UserMicroserviceName) private userClient: ClientProxy) {}
 
+  async getOrCreateUserByTgInitData(data: GetOrCreateUserAndTgAccountRequest) {
+    const getOrCreateUser$ = this.userClient.send<GetOrCreateUserAndTgAccountResponse>(
+      'user.get-or-create-user-and-tg-account.command',
+      data
+    );
+
+    return await firstValueFrom(getOrCreateUser$);
+  }
+
+  /*
   async getOrCreateUser(authorization: string) {
     if (!authorization) {
       throw new UnauthorizedException({
@@ -28,6 +43,7 @@ export class UserService {
 
     return await firstValueFrom(getUser$);
   }
+  */
 
   async setLastActiveAt(accountId: number, lastActiveAt: Date) {
     const setLastActiveAt$ = this.userClient.send<{ success: boolean }>(
@@ -36,5 +52,14 @@ export class UserService {
     );
 
     return await firstValueFrom(setLastActiveAt$);
+  }
+
+  async updateRefreshToken(data: UpdateUserRefreshTokenRequest) {
+    const updateTokenData$ = this.userClient.send<{ success: boolean }>(
+      'user.update-token-data.command',
+      data
+    );
+
+    return await firstValueFrom(updateTokenData$);
   }
 }

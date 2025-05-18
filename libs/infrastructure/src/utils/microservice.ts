@@ -56,6 +56,7 @@ export class MicroserviceExceptions implements NestInterceptor {
   intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError(err => {
+        console.error('Error:', err);
         if (!err.message) return throwError(() => new BadGatewayException());
         return throwError(() => new BadRequestException(err.message));
       })

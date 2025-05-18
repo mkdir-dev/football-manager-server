@@ -9,26 +9,30 @@ datasource db {
 }
 
 model UserAccount {
-  id                Int             @id @default(autoincrement())
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  lastActiveAt      DateTime        @default(now())
-  displayName       String
-  avatarUrl         String?
-  telegramAccount   TelegramAccount @relation(fields: [telegramAccountId], references: [id])
-  telegramAccountId Int             @unique
+  id                 Int              @id @default(autoincrement())
+  uuid               String           @default(uuid())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  lastActiveAt       DateTime         @default(now())
+  displayName        String
+  language           String?          @default("en")
+  avatarUrl          String?
+  hashRefreshToken   String?
+  refreshTokenExpiry DateTime?
+  telegramAccount    TelegramAccount? @relation(name: "UserToTelegramAccount")
 }
 
 model TelegramAccount {
-  id            Int          @id @default(autoincrement())
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  telegramId    Int          @unique
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  telegramId    Int         @unique
   username      String
   firstName     String
   lastName      String?
   avatarUrl     String?
-  language      String?      @default("en")
-  isAllowsWrite Boolean      @default(false)
-  user          UserAccount?
+  language      String?     @default("en")
+  isAllowsWrite Boolean     @default(false)
+  user          UserAccount @relation(name: "UserToTelegramAccount", fields: [userAccountId], references: [id])
+  userAccountId Int         @unique
 }
