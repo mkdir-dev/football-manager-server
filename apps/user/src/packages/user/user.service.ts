@@ -3,7 +3,8 @@ import { RpcException } from '@nestjs/microservices';
 
 import {
   GetOrCreateUserAndTgAccountRequest,
-  GetOrCreateUserAndTgAccountResponse,
+  GetOrCreateUserByGoogleOAuthRequest,
+  GetOrCreateUserResponse,
   UpdateUserRefreshTokenRequest,
 } from '@infrastructure/types/user.types';
 import { ServerExceptions } from '@infrastructure/exceptions/server.exceptions';
@@ -15,12 +16,39 @@ export class UserService {
 
   async getOrCreateUserAndTgAccount(
     data: GetOrCreateUserAndTgAccountRequest
-  ): Promise<GetOrCreateUserAndTgAccountResponse> {
+  ): Promise<GetOrCreateUserResponse> {
     try {
       let user = await this.userRepository.getUserByTelegramAccountId(data.telegramId);
 
       if (!user) {
         user = await this.userRepository.createUserAndTgAccount(data);
+      } else {
+        await this.userRepository.setLastActiveAt(user.id, new Date());
+      }
+
+      return {
+        accountId: user.id,
+        uuid: user.uuid,
+        displayName: user.displayName,
+        language: user.language,
+        avatarUrl: user.avatarUrl,
+      };
+    } catch (error) {
+      console.error('Error:', error);
+      throw new RpcException({
+        statusCode: 500,
+        message: ServerExceptions.InternalServerError,
+      });
+    }
+  }
+
+  async getOrCreateUserAndGoogleOAuth(data: GetOrCreateUserByGoogleOAuthRequest) {
+    //
+    try {
+      let user = await this.userRepository.getUserByGoogleId(data.googleId);
+
+      if (!user) {
+        user = await this.userRepository.createUserAndGoogleAccount(data);
       } else {
         await this.userRepository.setLastActiveAt(user.id, new Date());
       }

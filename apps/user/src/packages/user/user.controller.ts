@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import {
   GetOrCreateUserAndTgAccountRequest,
+  GetOrCreateUserByGoogleOAuthRequest,
   UpdateUserRefreshTokenRequest,
 } from '@infrastructure/types/user.types';
 import { UserService } from 'user/user.service';
@@ -11,10 +12,14 @@ import { UserService } from 'user/user.service';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  // user.get-or-create-user-and-tg-account.command
   @MessagePattern('user.get-or-create-user-and-tg-account.command')
   async getOrCreateUserAndTgAccount(@Payload() payload: GetOrCreateUserAndTgAccountRequest) {
     return this.userService.getOrCreateUserAndTgAccount(payload);
+  }
+
+  @MessagePattern('user.get-or-create-user-and-google-account.command')
+  async getOrCreateUserByGoogleOAuth(@Payload() payload: GetOrCreateUserByGoogleOAuthRequest) {
+    return this.userService.getOrCreateUserAndGoogleOAuth(payload);
   }
 
   /*

@@ -8,7 +8,7 @@ export interface GetOrCreateUserAndTgAccountRequest {
   isAllowsWrite?: boolean;
 }
 
-export interface GetOrCreateUserAndTgAccountResponse {
+export interface GetOrCreateUserResponse {
   accountId: number;
   uuid: string;
   displayName: string;
@@ -20,4 +20,14 @@ export interface UpdateUserRefreshTokenRequest {
   accountId: number;
   rt: string;
   rtExp: Date;
+}
+
+export interface GetOrCreateUserByGoogleOAuthRequest {
+  googleId: string; // sub: string; - subject (user id)
+  firstName: string; // given_name?: string;
+  lastName?: string; // family_name?: string;
+  username?: string; // name?: string;
+  email?: string; // email?: string;
+  isVerifiedEmail?: boolean; // email_verified?: boolean;
+  avatarUrl?: string; // picture?: string;
 }

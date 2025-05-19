@@ -4,7 +4,8 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   GetOrCreateUserAndTgAccountRequest,
-  GetOrCreateUserAndTgAccountResponse,
+  GetOrCreateUserResponse,
+  GetOrCreateUserByGoogleOAuthRequest,
   UpdateUserRefreshTokenRequest,
 } from '@infrastructure/types/user.types';
 import { UserMicroserviceName } from '@services/user/user.constants';
@@ -14,11 +15,19 @@ export class UserService {
   constructor(@Inject(UserMicroserviceName) private userClient: ClientProxy) {}
 
   async getOrCreateUserByTgInitData(data: GetOrCreateUserAndTgAccountRequest) {
-    const getOrCreateUser$ = this.userClient.send<GetOrCreateUserAndTgAccountResponse>(
+    const getOrCreateUser$ = this.userClient.send<GetOrCreateUserResponse>(
       'user.get-or-create-user-and-tg-account.command',
       data
     );
 
+    return await firstValueFrom(getOrCreateUser$);
+  }
+
+  async getOrCreateUserByGoogleOAuth(data: GetOrCreateUserByGoogleOAuthRequest) {
+    const getOrCreateUser$ = this.userClient.send<GetOrCreateUserResponse>(
+      'user.get-or-create-user-and-google-account.command',
+      data
+    );
     return await firstValueFrom(getOrCreateUser$);
   }
 

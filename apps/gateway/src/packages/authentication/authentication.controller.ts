@@ -49,6 +49,23 @@ export class AuthenticationController {
     return await this.authenticationService.loginTmaOAuth(authorization, body);
   }
 
+  // login/google
+  @ApiOperation({
+    description:
+      'Метод авторизации для пользователей вошедших в полную версию, но авторизировались по кнопке OAuth Google',
+    summary: 'Если пользователя нет, то он будет создан, если есть - обновится lastActiveAt',
+  })
+  @ApiResponse({
+    status: 200,
+    type: LoginResponse,
+    schema: { example: loginTmaAuthContract },
+  })
+  @Post('login/google')
+  @HttpCode(200)
+  async loginGoogleOAuth(@Headers('Authorization') authorization: string) {
+    return await this.authenticationService.loginGoogleOAuth(authorization);
+  }
+
   /*
   @ApiOperation({
     description: 'Метод для получения текущего аккаунта',

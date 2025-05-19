@@ -4,6 +4,7 @@ import { PrismaRepository } from '@infrastructure/utils';
 
 import {
   GetOrCreateUserAndTgAccountRequest,
+  GetOrCreateUserByGoogleOAuthRequest,
   UpdateUserRefreshTokenRequest,
 } from '@infrastructure/types/user.types';
 
@@ -17,7 +18,12 @@ export class UserRepository extends PrismaRepository<'user'> {
     const telegramAccount = await this.context.telegramAccount.findUnique({
       where: { telegramId },
       include: {
-        user: { include: { telegramAccount: true } },
+        user: {
+          include: {
+            telegramAccount: true,
+            googleAccount: true,
+          },
+        },
       },
     });
 
@@ -44,38 +50,42 @@ export class UserRepository extends PrismaRepository<'user'> {
           },
         },
       },
-      include: { telegramAccount: true },
+      include: { telegramAccount: true, googleAccount: true },
     });
   }
 
-  /*
-  async createUser(createUserAccount: CreateUserAccount) {
-    const displayName =
-      createUserAccount.username ||
-      createUserAccount.first_name ||
-      createUserAccount.last_name ||
-      'Unknown';
+  async getUserByGoogleId(googleId: string) {
+    const googleAccount = await this.context.googleAccount.findUnique({
+      where: { googleId },
+      include: {
+        user: { include: { telegramAccount: true, googleAccount: true } },
+      },
+    });
+    return googleAccount?.user;
+  }
+
+  async createUserAndGoogleAccount(data: GetOrCreateUserByGoogleOAuthRequest) {
+    const displayName = data.username || data.firstName || data.lastName || 'Unknown';
 
     return await this.context.userAccount.create({
       data: {
         displayName,
-        avatarUrl: createUserAccount.photo_url ?? '',
-        telegramAccount: {
+        avatarUrl: data.avatarUrl,
+        googleAccount: {
           create: {
-            telegramId: createUserAccount.id,
-            username: createUserAccount.username,
-            firstName: createUserAccount.first_name ?? '',
-            lastName: createUserAccount.last_name ?? '',
-            avatarUrl: createUserAccount.photo_url ?? '',
-            language: createUserAccount.language_code ?? 'en',
-            isAllowsWrite: createUserAccount.allows_write_to_pm ?? false,
+            googleId: data.googleId,
+            username: data.username ?? displayName,
+            firstName: data.firstName ?? '',
+            lastName: data.lastName,
+            avatarUrl: data.avatarUrl,
+            email: data.email,
+            isVerifiedEmail: data.isVerifiedEmail,
           },
         },
       },
-      include: { telegramAccount: true },
+      include: { telegramAccount: true, googleAccount: true },
     });
   }
-  */
 
   async setLastActiveAt(accountId: number, lastActiveAt: Date) {
     return await this.context.userAccount.update({

@@ -4,8 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
-import { AuthDataValidator } from '@telegram-auth/server';
-import { urlStrToAuthDataMap } from '@telegram-auth/server/utils';
+import * as jwt_decode from 'jwt-decode';
 
 import { AuthenticationExceptions } from '@infrastructure/exceptions/auth.exceptions';
 import { ServerExceptions } from '@infrastructure/exceptions/server.exceptions';
@@ -15,11 +14,15 @@ import { UserService } from 'user/user.service';
 
 import {
   GetTokenRequest,
+  GoogleIdTokenPayload,
   JwtPayload,
   TelegramInitialData,
 } from 'authentication/authentication.types';
 import { TelegramWebAppToken } from 'authentication/authentication.constants';
-import { GetOrCreateUserAndTgAccountRequest } from '@infrastructure/types/user.types';
+import {
+  GetOrCreateUserAndTgAccountRequest,
+  GetOrCreateUserResponse,
+} from '@infrastructure/types/user.types';
 
 @Injectable()
 export class AuthenticationService {
@@ -71,9 +74,34 @@ export class AuthenticationService {
     }
   }
 
+  async loginGoogleOAuth(credential: string) {
+    try {
+      const authData = jwt_decode.jwtDecode(credential) as GoogleIdTokenPayload;
+
+      const user = await this.userService.getOrCreateUserByGoogleOAuth({
+        googleId: authData.sub, // sub: string; - subject (user id)
+        firstName: authData.given_name, // given_name?: string;
+        lastName: authData.family_name, // family_name?: string;
+        username: authData.name, // name?: string;
+        email: authData.email, // email?: string;
+        isVerifiedEmail: authData.email_verified, // email_verified?: boolean;
+        avatarUrl: authData.picture, // picture?: string;
+      });
+
+      return await this.getTokensAndUpdateRefreshToken(user);
+    } catch (error) {
+      console.error('Error: ', error);
+      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+    }
+  }
+
   private async loginByTelegramData(data: GetOrCreateUserAndTgAccountRequest) {
     const user = await this.userService.getOrCreateUserByTgInitData(data);
 
+    return await this.getTokensAndUpdateRefreshToken(user);
+  }
+
+  private async getTokensAndUpdateRefreshToken(user: GetOrCreateUserResponse) {
     const tokens = await this.getTokens({
       id: user.accountId,
       uuid: user.uuid,

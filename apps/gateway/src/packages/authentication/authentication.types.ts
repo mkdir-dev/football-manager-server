@@ -33,3 +33,20 @@ export interface JwtPayload {
   displayName: string;
   // role: roleEnum;
 }
+
+export interface GoogleIdTokenPayload {
+  iss: string; // issuer
+  azp?: string; // authorized party
+  aud: string; // audience (client id)
+  sub: string; // subject (user id)
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  picture?: string;
+  given_name?: string;
+  family_name?: string;
+  iat: number; // issued at (timestamp)
+  exp: number; // expiration (timestamp)
+  nbf?: number; // not before (timestamp)
+  jti?: string; // JWT ID
+}

@@ -17,9 +17,11 @@ model UserAccount {
   displayName        String
   language           String?          @default("en")
   avatarUrl          String?
+  email              String?
   hashRefreshToken   String?
   refreshTokenExpiry DateTime?
   telegramAccount    TelegramAccount? @relation(name: "UserToTelegramAccount")
+  googleAccount      GoogleAccount?   @relation(name: "UserToGoogleAccount")
 }
 
 model TelegramAccount {
@@ -35,4 +37,19 @@ model TelegramAccount {
   isAllowsWrite Boolean     @default(false)
   user          UserAccount @relation(name: "UserToTelegramAccount", fields: [userAccountId], references: [id])
   userAccountId Int         @unique
+}
+
+model GoogleAccount {
+  id              Int         @id @default(autoincrement())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  googleId        String      @unique
+  username        String
+  firstName       String
+  lastName        String?
+  avatarUrl       String?
+  email           String?
+  isVerifiedEmail Boolean?    @default(false)
+  user            UserAccount @relation(name: "UserToGoogleAccount", fields: [userAccountId], references: [id])
+  userAccountId   Int         @unique
 }
