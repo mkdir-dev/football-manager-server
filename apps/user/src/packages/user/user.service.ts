@@ -19,7 +19,11 @@ export class UserService {
     try {
       let user = await this.userRepository.getUserByTelegramAccountId(data.telegramId);
 
-      if (!user) user = await this.userRepository.createUserAndTgAccount(data);
+      if (!user) {
+        user = await this.userRepository.createUserAndTgAccount(data);
+      } else {
+        await this.userRepository.setLastActiveAt(user.id, new Date());
+      }
 
       return {
         accountId: user.id,

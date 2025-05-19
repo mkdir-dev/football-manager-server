@@ -4,10 +4,12 @@ import { JwtService } from '@nestjs/jwt';
 
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { AuthDataValidator } from '@telegram-auth/server';
+import { urlStrToAuthDataMap } from '@telegram-auth/server/utils';
 
 import { AuthenticationExceptions } from '@infrastructure/exceptions/auth.exceptions';
 import { ServerExceptions } from '@infrastructure/exceptions/server.exceptions';
-import { LoginTmaAuthResponse } from '@infrastructure/types/auth.types';
+import { LoginResponse, LoginTmaOAuthRequest } from '@infrastructure/types/auth.types';
 
 import { UserService } from 'user/user.service';
 
@@ -17,6 +19,7 @@ import {
   TelegramInitialData,
 } from 'authentication/authentication.types';
 import { TelegramWebAppToken } from 'authentication/authentication.constants';
+import { GetOrCreateUserAndTgAccountRequest } from '@infrastructure/types/user.types';
 
 @Injectable()
 export class AuthenticationService {
@@ -26,7 +29,7 @@ export class AuthenticationService {
     private userService: UserService
   ) {}
 
-  async loginTmaAuth(initialDataRaw: string): Promise<LoginTmaAuthResponse> {
+  async loginTmaAuth(initialDataRaw: string): Promise<LoginResponse> {
     try {
       if (!initialDataRaw || typeof initialDataRaw !== 'string') {
         throw new UnauthorizedException(
@@ -36,7 +39,7 @@ export class AuthenticationService {
 
       const initialData = await this.authenticateByTmaInitialData(initialDataRaw);
 
-      const user = await this.userService.getOrCreateUserByTgInitData({
+      return await this.loginByTelegramData({
         telegramId: initialData.metadata.user.id,
         firstName: initialData.metadata.user.first_name,
         lastName: initialData.metadata.user.last_name,
@@ -45,45 +48,90 @@ export class AuthenticationService {
         isAllowsWrite: initialData.metadata.user.allows_write_to_pm,
         language: initialData.metadata.user.language_code,
       });
-
-      const tokens = await this.getTokens({
-        id: user.accountId,
-        uuid: user.uuid,
-        displayName: user.displayName,
-      });
-
-      const isUpdateRefreshToken = await this.updateRefreshToken(
-        user.accountId,
-        tokens.refreshToken
-      );
-
-      if (!isUpdateRefreshToken.success) {
-        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
-      }
-
-      return {
-        ...user,
-        ...tokens,
-        accessTokenExpiry: new Date(tokens.accessTokenExpiry),
-        refreshTokenExpiry: new Date(tokens.refreshTokenExpiry),
-      };
     } catch (error) {
       console.error('Error: ', error);
       throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
     }
   }
 
+  async loginTmaOAuth(hash: string, data: LoginTmaOAuthRequest) {
+    try {
+      const authData = await this.authenticateByTmaData(hash, data);
+
+      return await this.loginByTelegramData({
+        telegramId: authData.telegramId,
+        firstName: authData.firstName,
+        lastName: authData.lastName,
+        username: authData.username,
+        avatarUrl: authData.avatarUrl,
+      });
+    } catch (error) {
+      console.error('Error: ', error);
+      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+    }
+  }
+
+  private async loginByTelegramData(data: GetOrCreateUserAndTgAccountRequest) {
+    const user = await this.userService.getOrCreateUserByTgInitData(data);
+
+    const tokens = await this.getTokens({
+      id: user.accountId,
+      uuid: user.uuid,
+      displayName: user.displayName,
+    });
+
+    const isUpdateRefreshToken = await this.updateRefreshToken(user.accountId, tokens.refreshToken);
+
+    if (!isUpdateRefreshToken.success) {
+      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+    }
+
+    return {
+      ...user,
+      ...tokens,
+      accessTokenExpiry: new Date(tokens.accessTokenExpiry),
+      refreshTokenExpiry: new Date(tokens.refreshTokenExpiry),
+    };
+  }
+
   private async authenticateByTmaInitialData(initialDataRaw: string) {
     const initialData = this.parseInitialDataRaw(initialDataRaw);
 
     const telegramToken = this.configService.getOrThrow('TELEGRAM_BOT_TOKEN');
-    let secretKey = await this.createSecretKey(telegramToken);
+    const secretKey = crypto
+      .createHmac('sha256', TelegramWebAppToken)
+      .update(telegramToken)
+      .digest();
+    const validationKey = crypto
+      .createHmac('sha256', secretKey)
+      .update(initialData.token)
+      .digest('hex');
 
-    const validationKey = await this.createValidationKey(initialData.token, secretKey);
     const isValidRequest = initialData.hash === validationKey;
     if (!isValidRequest) throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
 
     return initialData;
+  }
+
+  private async authenticateByTmaData(hash: string, data: LoginTmaOAuthRequest) {
+    const telegramToken = this.configService.getOrThrow('TELEGRAM_BOT_TOKEN');
+    const dataCheckArr = Object.keys(data)
+      .sort()
+      .map(key => `${key}=${data[key]}`);
+
+    const dataCheckString = dataCheckArr.join('\n');
+    const secretKey = crypto.createHash('sha256').update(telegramToken).digest();
+    const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+    if (hmac !== hash) throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
+
+    return {
+      telegramId: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      username: data.username,
+      avatarUrl: data.photo_url,
+    };
   }
 
   private parseInitialDataRaw(initialDataRaw: string): TelegramInitialData {
@@ -113,19 +161,6 @@ export class AuthenticationService {
         user: JSON.parse(user),
       },
     };
-  }
-
-  private async createSecretKey(telegramToken: string) {
-    const secretKey = crypto
-      .createHmac('sha256', TelegramWebAppToken)
-      .update(telegramToken)
-      .digest();
-
-    return secretKey;
-  }
-
-  private async createValidationKey(initialDataToken: string, secretKey: Buffer) {
-    return crypto.createHmac('sha256', secretKey).update(initialDataToken).digest('hex');
   }
 
   private async getTokens(data: GetTokenRequest) {
@@ -183,7 +218,7 @@ export class AuthenticationService {
     return await bcrypt
       .hash(data, 16)
       .then((hash: any): string => hash)
-      .catch((error): Error => {
+      .catch((error: any): Error => {
         console.error('Error: ', error);
         throw new InternalServerErrorException(ServerExceptions.InternalServerError);
       });

@@ -1,6 +1,6 @@
-import { LoginTmaAuthResponse } from '../types/auth.types';
+import { LoginResponse } from '../types/auth.types';
 
-export const loginTmaAuthContract: LoginTmaAuthResponse = {
+export const loginTmaAuthContract: LoginResponse = {
   accountId: 1234,
   uuid: '7acb4160-84eb-4bac-9a4d-6625516a26d2',
   displayName: 'displayName',
