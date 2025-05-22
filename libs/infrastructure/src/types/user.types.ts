@@ -31,3 +31,46 @@ export interface GetOrCreateUserByGoogleOAuthRequest {
   isVerifiedEmail?: boolean; // email_verified?: boolean;
   avatarUrl?: string; // picture?: string;
 }
+
+export interface TelegramAccount {
+  telegramAccountId: number;
+  telegramId: number;
+  username: string;
+  firstName: string;
+  lastName?: string;
+  avatarUrl?: string;
+  language?: string;
+  isAllowsWrite: boolean;
+}
+
+export interface GoogleAccount {
+  googleAccountId: number;
+  googleId: string;
+  username: string;
+  firstName: string;
+  lastName?: string;
+  avatarUrl?: string;
+  email?: string;
+  isVerifiedEmail: boolean;
+}
+
+export interface UserAccount {
+  accountId: number;
+  uuid: string;
+  displayName: string;
+  language: string;
+  avatarUrl?: string;
+  email?: string;
+  telegramAccount: TelegramAccount;
+  googleAccount: GoogleAccount;
+}
+
+export interface UserAccountAuthData {
+  accountId: number;
+  uuid: string;
+  displayName: string;
+  language: string;
+  avatarUrl?: string;
+  hashRefreshToken: string;
+  refreshTokenExpiry: Date;
+}

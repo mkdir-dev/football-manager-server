@@ -26,12 +26,19 @@ export interface GetTokenRequest {
   displayName: string;
 }
 
+export enum JwtTokenType {
+  access = 'access',
+  refresh = 'refresh',
+}
+
 export interface JwtPayload {
   sub: string;
   id: number;
   uuid: string;
   displayName: string;
-  // role: roleEnum;
+  type?: JwtTokenType;
+  iat?: number; // дата создания токена (timestamp)
+  exp?: number; // дата истечения токена (timestamp)
 }
 
 export interface GoogleIdTokenPayload {

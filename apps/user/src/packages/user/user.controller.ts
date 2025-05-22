@@ -22,13 +22,6 @@ export class UserController {
     return this.userService.getOrCreateUserAndGoogleOAuth(payload);
   }
 
-  /*
-  @MessagePattern('user.get-or-create-user.command')
-  async getOrCreateUser(@Payload() payload: { authorization: string }) {
-    return this.userService.getOrCreateUser(payload.authorization);
-  }
-  */
-
   @MessagePattern('user.set-last-active-at.command')
   async setLastActiveAt(@Payload() payload: { accountId: number; lastActiveAt: Date }) {
     return this.userService.setLastActiveAt(payload.accountId, payload.lastActiveAt);
@@ -37,5 +30,16 @@ export class UserController {
   @MessagePattern('user.update-token-data.command')
   async updateTokenData(@Payload() payload: UpdateUserRefreshTokenRequest) {
     return await this.userService.updateTokenData(payload);
+  }
+
+  @MessagePattern('user.get-user-by-id.query')
+  async getUserByAccountId(@Payload() payload: { accountId: number }) {
+    return this.userService.getUserByAccountId(payload.accountId);
+  }
+
+  // user.get-user-auth-data.query
+  @MessagePattern('user.get-user-auth-data.query')
+  async getUserAuthDataByAccountId(@Payload() payload: { accountId: number }) {
+    return this.userService.getUserAuthDataByAccountId(payload.accountId);
   }
 }

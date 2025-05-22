@@ -109,4 +109,27 @@ export class UserRepository extends PrismaRepository<'user'> {
       },
     });
   }
+
+  async getUserByAccountId(accountId: number) {
+    return await this.context.userAccount.findUnique({
+      where: { id: accountId },
+      include: {
+        telegramAccount: true,
+        googleAccount: true,
+      },
+    });
+  }
+
+  async getUserAuthDataByAccountId(accountId: number) {
+    return await this.context.userAccount.findUnique({
+      where: { id: accountId },
+      select: {
+        id: true,
+        uuid: true,
+        displayName: true,
+        hashRefreshToken: true,
+        refreshTokenExpiry: true,
+      },
+    });
+  }
 }

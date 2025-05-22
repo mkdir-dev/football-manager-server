@@ -3,10 +3,12 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
 import {
+  UserAccount,
   GetOrCreateUserAndTgAccountRequest,
   GetOrCreateUserResponse,
   GetOrCreateUserByGoogleOAuthRequest,
   UpdateUserRefreshTokenRequest,
+  UserAccountAuthData,
 } from '@infrastructure/types/user.types';
 import { UserMicroserviceName } from '@services/user/user.constants';
 
@@ -31,29 +33,6 @@ export class UserService {
     return await firstValueFrom(getOrCreateUser$);
   }
 
-  /*
-  async getOrCreateUser(authorization: string) {
-    if (!authorization) {
-      throw new UnauthorizedException({
-        statusCode: 401,
-        status: 'error',
-        message: 'Unauthorized',
-      });
-    }
-
-    const getUser$ = this.userClient.send<{
-      accountId: number;
-      displayName: string;
-      avatarUrl: string | null;
-      language: string | null;
-    }>('user.get-or-create-user.command', {
-      authorization,
-    });
-
-    return await firstValueFrom(getUser$);
-  }
-  */
-
   async setLastActiveAt(accountId: number, lastActiveAt: Date) {
     const setLastActiveAt$ = this.userClient.send<{ success: boolean }>(
       'user.set-last-active-at.command',
@@ -70,5 +49,22 @@ export class UserService {
     );
 
     return await firstValueFrom(updateTokenData$);
+  }
+
+  async getUserByAccountId(accountId: number) {
+    const getCurrentUser$ = this.userClient.send<UserAccount>('user.get-user-by-id.query', {
+      accountId,
+    });
+
+    return await firstValueFrom(getCurrentUser$);
+  }
+
+  async getUserAuthDataByAccountId(accountId: number) {
+    const getCurrentUser$ = this.userClient.send<UserAccountAuthData>(
+      'user.get-user-auth-data.query',
+      { accountId }
+    );
+
+    return await firstValueFrom(getCurrentUser$);
   }
 }

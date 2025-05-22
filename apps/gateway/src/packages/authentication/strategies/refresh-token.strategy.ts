@@ -1,24 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Request } from 'express';
-
-import { JwtPayload } from 'packages/authentication/authentication.types';
+import { ConfigService } from '@nestjs/config';
+import { JwtPayload } from '../authentication.types';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(configService: ConfigService) {
+  constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get<string>('RT_JWT_SECRET_KEY'),
-      passReqToCallback: true,
+      secretOrKey: configService.getOrThrow<string>('RT_JWT_SECRET_KEY'),
+      passReqToCallback: false,
     });
   }
 
-  validate(req: Request, payload: JwtPayload) {
-    const refreshToken = req?.get('authorization')?.replace('Bearer', '').trim();
-
-    return { ...payload, refreshToken };
+  async validate(payload: any) {
+    // Можно добавить доп. проверки
+    return payload;
   }
 }

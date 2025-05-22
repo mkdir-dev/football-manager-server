@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  InternalServerErrorException,
+  ExecutionContext,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
@@ -16,6 +21,7 @@ import {
   GetTokenRequest,
   GoogleIdTokenPayload,
   JwtPayload,
+  JwtTokenType,
   TelegramInitialData,
 } from 'authentication/authentication.types';
 import { TelegramWebAppToken } from 'authentication/authentication.constants';
@@ -95,6 +101,71 @@ export class AuthenticationService {
     }
   }
 
+  async refreshToken(refreshToken: string, payload: JwtPayload) {
+    try {
+      if (payload.type !== 'refresh') {
+        console.error('Error: not a refresh token. ', payload);
+        throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
+      }
+
+      const userAuthData = await this.userService.getUserAuthDataByAccountId(payload.id);
+      if (!userAuthData) {
+        console.error('Error: user not found. ', userAuthData);
+        throw new UnauthorizedException(AuthenticationExceptions.UserNotFound);
+      }
+
+      // сравнение хеша refresh токена, если хранишь его в базе
+      const isValidRefreshToken = await bcrypt
+        .compare(refreshToken.replace('Bearer', '').trim(), userAuthData.hashRefreshToken)
+        .then((result: boolean) => result)
+        .catch((error: any): Error => {
+          console.error('Error: ', error);
+          throw new InternalServerErrorException(ServerExceptions.InternalServerError);
+        });
+
+      const refreshTokenExpiry = new Date(userAuthData.refreshTokenExpiry).getTime();
+      const dateNow = new Date().getTime();
+      if (refreshTokenExpiry < dateNow || payload.exp * 1000 < dateNow) {
+        console.error('Error: refresh token expired');
+        throw new UnauthorizedException(AuthenticationExceptions.TokenExpired);
+      }
+
+      if (!isValidRefreshToken) {
+        console.error('Error: refresh token is invalid');
+        throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
+      }
+
+      const tokens = await this.getTokens({
+        id: userAuthData.accountId,
+        uuid: userAuthData.uuid,
+        displayName: userAuthData.displayName,
+      });
+
+      const isUpdateRefreshToken = await this.updateRefreshToken(
+        userAuthData.accountId,
+        tokens.refreshToken
+      );
+      if (!isUpdateRefreshToken.success) {
+        console.error('Error: update refresh token failed');
+        throw new UnauthorizedException(AuthenticationExceptions.TokenRefreshError);
+      }
+
+      return {
+        accountId: userAuthData.accountId,
+        uuid: userAuthData.uuid,
+        displayName: userAuthData.displayName,
+        language: userAuthData.language,
+        avatarUrl: userAuthData.avatarUrl,
+        ...tokens,
+        accessTokenExpiry: new Date(tokens.accessTokenExpiry),
+        refreshTokenExpiry: new Date(tokens.refreshTokenExpiry),
+      };
+    } catch (error) {
+      console.error('Error: ', error);
+      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+    }
+  }
+
   private async loginByTelegramData(data: GetOrCreateUserAndTgAccountRequest) {
     const user = await this.userService.getOrCreateUserByTgInitData(data);
 
@@ -109,13 +180,17 @@ export class AuthenticationService {
     });
 
     const isUpdateRefreshToken = await this.updateRefreshToken(user.accountId, tokens.refreshToken);
-
     if (!isUpdateRefreshToken.success) {
-      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      console.error('Error: update refresh token failed');
+      throw new UnauthorizedException(AuthenticationExceptions.TokenRefreshError);
     }
 
     return {
-      ...user,
+      accountId: user.accountId,
+      uuid: user.uuid,
+      displayName: user.displayName,
+      language: user.language,
+      avatarUrl: user.avatarUrl,
       ...tokens,
       accessTokenExpiry: new Date(tokens.accessTokenExpiry),
       refreshTokenExpiry: new Date(tokens.refreshTokenExpiry),
@@ -209,14 +284,20 @@ export class AuthenticationService {
     const refreshTokenExpiry = Date.now() + Number(expiresInRefreshTokenJwt) - 600000;
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(jwtPayload, {
-        secret: accessTokenJwtSecretKey,
-        expiresIn: expiresInAccessTokenJwt,
-      }),
-      this.jwtService.signAsync(jwtPayload, {
-        secret: refreshTokenJwtSecretKey,
-        expiresIn: expiresInRefreshTokenJwt,
-      }),
+      this.jwtService.signAsync(
+        { ...jwtPayload, type: JwtTokenType.access },
+        {
+          secret: accessTokenJwtSecretKey,
+          expiresIn: expiresInAccessTokenJwt,
+        }
+      ),
+      this.jwtService.signAsync(
+        { ...jwtPayload, type: JwtTokenType.refresh },
+        {
+          secret: refreshTokenJwtSecretKey,
+          expiresIn: expiresInRefreshTokenJwt,
+        }
+      ),
     ]).catch(error => {
       console.error('Error: ', error);
       throw new UnauthorizedException(AuthenticationExceptions.TokenInternalServerError);
