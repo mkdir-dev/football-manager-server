@@ -1,4 +1,4 @@
-import { LoginResponse } from '../types/auth.types';
+import { LoginResponse, LogoutResponse } from '../types/auth.types';
 
 export const loginTmaAuthContract: LoginResponse = {
   accountId: 1234,
@@ -12,4 +12,9 @@ export const loginTmaAuthContract: LoginResponse = {
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXVpZCI6IjdhY2I0MTYwLTg0ZWItNGJhYy05YTRkLTY2MjU1MTZhMjZkMiIsImRpc3BsYXlOYW1lIjoibWtkaXJfd2ViX2RldiIsInN1YiI6IjdhY2I0MTYwLTg0ZWItNGJhYy05YTRkLTY2MjU1MTZhMjZkMiIsImlhdCI6MTc0NzU4ODY5NCwiZXhwIjoxNzQ3Njc1MDk0fQ.iGKUx_mnPROa0A5fMmcOu0t30MGto6obzb4yjm6SSrY',
   accessTokenExpiry: new Date('2025-05-18T18:13:14.611Z'),
   refreshTokenExpiry: new Date('2025-05-19T17:08:14.611Z'),
+};
+
+export const logoutContract: LogoutResponse = {
+  success: true,
+  message: 'Logout successful',
 };

@@ -18,8 +18,8 @@ export interface GetOrCreateUserResponse {
 
 export interface UpdateUserRefreshTokenRequest {
   accountId: number;
-  rt: string;
-  rtExp: Date;
+  rt?: string;
+  rtExp?: Date;
 }
 
 export interface GetOrCreateUserByGoogleOAuthRequest {

@@ -1,8 +1,8 @@
 import {
   Injectable,
   UnauthorizedException,
+  NotFoundException,
   InternalServerErrorException,
-  ExecutionContext,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -59,7 +59,11 @@ export class AuthenticationService {
       });
     } catch (error) {
       console.error('Error: ', error);
-      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      }
+      throw new InternalServerErrorException(AuthenticationExceptions.Unauthorized);
     }
   }
 
@@ -76,7 +80,11 @@ export class AuthenticationService {
       });
     } catch (error) {
       console.error('Error: ', error);
-      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      }
+      throw new InternalServerErrorException(AuthenticationExceptions.Unauthorized);
     }
   }
 
@@ -97,13 +105,17 @@ export class AuthenticationService {
       return await this.getTokensAndUpdateRefreshToken(user);
     } catch (error) {
       console.error('Error: ', error);
-      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      }
+      throw new InternalServerErrorException(AuthenticationExceptions.Unauthorized);
     }
   }
 
   async refreshToken(refreshToken: string, payload: JwtPayload) {
     try {
-      if (payload.type !== 'refresh') {
+      if (payload.type !== JwtTokenType.refresh) {
         console.error('Error: not a refresh token. ', payload);
         throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
       }
@@ -111,10 +123,9 @@ export class AuthenticationService {
       const userAuthData = await this.userService.getUserAuthDataByAccountId(payload.id);
       if (!userAuthData) {
         console.error('Error: user not found. ', userAuthData);
-        throw new UnauthorizedException(AuthenticationExceptions.UserNotFound);
+        throw new NotFoundException(AuthenticationExceptions.UserNotFound);
       }
 
-      // сравнение хеша refresh токена, если хранишь его в базе
       const isValidRefreshToken = await bcrypt
         .compare(refreshToken.replace('Bearer', '').trim(), userAuthData.hashRefreshToken)
         .then((result: boolean) => result)
@@ -162,7 +173,46 @@ export class AuthenticationService {
       };
     } catch (error) {
       console.error('Error: ', error);
-      throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      }
+      throw new InternalServerErrorException(AuthenticationExceptions.Unauthorized);
+    }
+  }
+
+  async logout(token: string, payload: JwtPayload) {
+    try {
+      if (payload.type !== JwtTokenType.refresh) {
+        console.error('Error: not a refresh token. ', payload);
+        throw new UnauthorizedException(AuthenticationExceptions.InvalidHash);
+      }
+
+      const userAuthData = await this.userService.getUserAuthDataByAccountId(payload.id);
+      if (!userAuthData) {
+        throw new NotFoundException(AuthenticationExceptions.UserNotFound);
+      }
+
+      const isUpdateRefreshToken = await this.userService.updateRefreshToken({
+        accountId: userAuthData.accountId,
+        rt: null,
+        rtExp: null,
+      });
+      if (!isUpdateRefreshToken.success) {
+        console.error('Error: remove refresh token failed');
+        throw new UnauthorizedException(AuthenticationExceptions.LogoutFailed);
+      }
+
+      return {
+        success: true,
+        message: 'Logout successful',
+      };
+    } catch (error) {
+      console.error('Error: ', error);
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException(AuthenticationExceptions.Unauthorized);
+      }
+      throw new InternalServerErrorException(AuthenticationExceptions.LogoutFailed);
     }
   }
 

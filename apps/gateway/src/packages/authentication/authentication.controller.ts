@@ -1,18 +1,12 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  HttpCode,
-  HttpStatus,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
-import { loginTmaAuthContract } from '@infrastructure/contracts/auth.contract';
-import { LoginResponse, LoginTmaOAuthRequest } from '@infrastructure/types/auth.types';
+import { loginTmaAuthContract, logoutContract } from '@infrastructure/contracts/auth.contracts';
+import {
+  LoginResponse,
+  LoginTmaOAuthRequest,
+  LogoutResponse,
+} from '@infrastructure/types/auth.types';
 
 import { AuthenticationService } from 'authentication/authentication.service';
 import { JwtPayload } from 'authentication/authentication.types';
@@ -78,6 +72,7 @@ export class AuthenticationController {
 
   @ApiOperation({
     description: 'Метод для обновления токена',
+    summary: 'Обновляет access токен пользователя, по переданному refresh токену',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -92,5 +87,24 @@ export class AuthenticationController {
     @GetUserFromReq() user: JwtPayload
   ) {
     return await this.authenticationService.refreshToken(authorization, user);
+  }
+
+  @ApiOperation({
+    description: 'Метод для выхода из системы',
+    summary: 'Удаляет токены и сессию пользователя по переданному refresh токену',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: LogoutResponse,
+    schema: { example: logoutContract },
+  })
+  @UseGuards(JwtRefreshGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @Headers('Authorization') authorization: string,
+    @GetUserFromReq() user: JwtPayload
+  ) {
+    return await this.authenticationService.logout(authorization, user);
   }
 }

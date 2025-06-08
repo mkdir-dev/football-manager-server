@@ -18,3 +18,8 @@ export class LoginTmaOAuthRequest {
   photo_url?: string;
   username?: string;
 }
+
+export class LogoutResponse {
+  success: boolean;
+  message: string;
+}

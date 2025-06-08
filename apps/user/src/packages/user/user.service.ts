@@ -45,7 +45,6 @@ export class UserService {
   }
 
   async getOrCreateUserAndGoogleOAuth(data: GetOrCreateUserByGoogleOAuthRequest) {
-    //
     try {
       let user = await this.userRepository.getUserByGoogleId(data.googleId);
 
@@ -74,6 +73,10 @@ export class UserService {
   async updateTokenData(data: UpdateUserRefreshTokenRequest): Promise<{ success: boolean }> {
     try {
       const updatedTokenData = await this.userRepository.updateTokenData(data);
+
+      if (!!updatedTokenData) {
+        await this.userRepository.setLastActiveAt(updatedTokenData.id, new Date());
+      }
 
       return { success: !!updatedTokenData };
     } catch (error) {

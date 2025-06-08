@@ -7,4 +7,5 @@ export const AuthenticationExceptions = {
   UserNotFound: 'User not found',
   TokenRefreshError: 'Token refresh error',
   TokenExpired: 'Token expired',
+  LogoutFailed: 'Logout failed',
 };

@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 
 import {
   GetOrCreateUserAndTgAccountRequest,
@@ -37,7 +37,6 @@ export class UserController {
     return this.userService.getUserByAccountId(payload.accountId);
   }
 
-  // user.get-user-auth-data.query
   @MessagePattern('user.get-user-auth-data.query')
   async getUserAuthDataByAccountId(@Payload() payload: { accountId: number }) {
     return this.userService.getUserAuthDataByAccountId(payload.accountId);

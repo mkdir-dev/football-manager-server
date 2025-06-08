@@ -14,7 +14,7 @@ async function bootstrap() {
 
   await app.listen(PORT);
 
-  Logger.log(`🚀 Application BOT is running on: http://localhost:${PORT}`);
+  Logger.log(`🚀 Application BOT_SERVICE is running on: http://localhost:${PORT}`);
 }
 
 bootstrap();

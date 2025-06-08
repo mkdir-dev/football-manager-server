@@ -91,7 +91,7 @@ export class UserRepository extends PrismaRepository<'user'> {
     return await this.context.userAccount.update({
       where: { id: accountId },
       data: { lastActiveAt },
-      include: { telegramAccount: true },
+      include: { telegramAccount: true, googleAccount: true },
     });
   }
 

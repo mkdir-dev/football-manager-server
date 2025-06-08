@@ -7,7 +7,7 @@ import { JwtTokenType } from 'packages/authentication/authentication.types';
 import { JwtPayload } from 'packages/authentication/authentication.types';
 
 @Injectable()
-export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
+export class JwtAccessGuard extends AuthGuard('jwt') {
   handleRequest<TUser = any>(
     err: any,
     user: TUser,
@@ -16,6 +16,7 @@ export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
     status?: any
   ): TUser | JwtPayload {
     if (err || !user) {
+      console.error('JWT Access Guard error: ', err);
       throw (
         err ||
         new UnauthorizedException(AuthenticationExceptions.AuthorizationHeaderIsMissingOrInvalid)
@@ -23,13 +24,12 @@ export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
     }
 
     // @ts-expect-error: check if user is of type JwtPayload
-    if (user.type !== JwtTokenType.refresh) {
+    if (user.type !== JwtTokenType.access) {
+      console.error('JWT Access Guard error: ', err);
       throw new UnauthorizedException(
         AuthenticationExceptions.AuthorizationHeaderIsMissingOrInvalid
       );
     }
-
-    // await this.accountService.setLastActiveAt(request.account.id, lastActiveAt);
 
     return user as JwtPayload;
   }
